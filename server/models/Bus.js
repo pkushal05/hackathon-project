@@ -1,16 +1,22 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const busSchema = new mongoose.Schema({
-  busNumber: { type: String, required: true },
-  alias: { type: String, required: true, unique: true },
-  manufacturer: { type: String, default: '' },
-  model: { type: String, default: '' },
-  year: { type: Number },
-  garage: { type: String, default: '' },
-  status: { type: String, enum: ['Active', 'Inactive', 'Maintenance', 'Retired'], default: 'Active' },
-}, { timestamps: true });
+const busSchema = new mongoose.Schema(
+  {
+    busNumber: { type: String, required: true },
+    alias: { type: String, required: true, unique: true },
+    manufacturer: { type: String, default: "" },
+    year: { type: Number },
+    garage: { type: String, default: "" },
+    status: {
+      type: String,
+      enum: ["Operating", "Inactive", "Maintenance", "Retired"],
+      default: "Operating",
+    },
+  },
+  { timestamps: true },
+);
 
 busSchema.index({ alias: 1 });
 busSchema.index({ status: 1 });
 
-module.exports = mongoose.model('Bus', busSchema);
+module.exports = mongoose.model("Bus", busSchema);

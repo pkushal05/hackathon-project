@@ -1,6 +1,7 @@
 const DEFAULT_MAP = {
   healthy: "success",
   active: "success",
+  operating: "success",
   good: "success",
   due: "warning",
   warning: "warning",

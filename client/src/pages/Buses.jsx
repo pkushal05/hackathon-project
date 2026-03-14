@@ -1,37 +1,53 @@
-import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
-import { busesApi } from '../api/client';
-import Modal from '../components/Modal';
-import PageContainer from '../components/ui/PageContainer';
-import DashboardCard from '../components/ui/DashboardCard';
-import DataTable from '../components/ui/DataTable';
-import FormField from '../components/ui/FormField';
-import StatusBadge from '../components/ui/StatusBadge';
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Plus, Pencil, Trash2 } from "lucide-react";
+import { busesApi } from "../api/client";
+import Modal from "../components/Modal";
+import PageContainer from "../components/ui/PageContainer";
+import DashboardCard from "../components/ui/DashboardCard";
+import DataTable from "../components/ui/DataTable";
+import FormField from "../components/ui/FormField";
+import StatusBadge from "../components/ui/StatusBadge";
 
 const emptyBus = {
-  busNumber: '',
-  alias: '',
-  manufacturer: '',
-  model: '',
-  year: '',
-  garage: '',
-  status: 'Active',
+  busNumber: "",
+  alias: "",
+  manufacturer: "",
+  year: "",
+  garage: "",
+  status: "Operating",
 };
+
+function normalizeStatus(status) {
+  const normalized = String(status || "")
+    .trim()
+    .toLowerCase();
+  const map = {
+    active: "Operating",
+    operating: "Operating",
+    inactive: "Inactive",
+    maintenance: "Maintenance",
+    retired: "Retired",
+  };
+  return map[normalized] || "Operating";
+}
 
 export default function Buses() {
   const queryClient = useQueryClient();
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBus, setEditingBus] = useState(null);
   const [form, setForm] = useState(emptyBus);
 
-  const { data, isLoading } = useQuery({ queryKey: ['buses'], queryFn: busesApi.getAll });
+  const { data, isLoading } = useQuery({
+    queryKey: ["buses"],
+    queryFn: busesApi.getAll,
+  });
 
   const createMutation = useMutation({
     mutationFn: busesApi.create,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['buses'] });
+      queryClient.invalidateQueries({ queryKey: ["buses"] });
       closeModal();
     },
   });
@@ -39,14 +55,14 @@ export default function Buses() {
   const updateMutation = useMutation({
     mutationFn: ({ id, payload }) => busesApi.update(id, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['buses'] });
+      queryClient.invalidateQueries({ queryKey: ["buses"] });
       closeModal();
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: busesApi.remove,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['buses'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["buses"] }),
   });
 
   const buses = (data?.data || []).filter((bus) => {
@@ -66,7 +82,7 @@ export default function Buses() {
 
   function openEdit(bus) {
     setEditingBus(bus);
-    setForm({ ...bus });
+    setForm({ ...bus, status: normalizeStatus(bus.status) || "Operating" });
     setIsModalOpen(true);
   }
 
@@ -78,37 +94,40 @@ export default function Buses() {
 
   function handleSubmit(event) {
     event.preventDefault();
+    const payload = {
+      ...form,
+      status: normalizeStatus(form.status) || "Operating",
+    };
     if (editingBus) {
-      updateMutation.mutate({ id: editingBus._id, payload: form });
+      updateMutation.mutate({ id: editingBus._id, payload });
       return;
     }
-    createMutation.mutate(form);
+    createMutation.mutate(payload);
   }
 
   const columns = [
-    { key: 'busNumber', header: 'Bus Number' },
-    { key: 'alias', header: 'Alias' },
-    { key: 'manufacturer', header: 'Manufacturer' },
-    { key: 'model', header: 'Model' },
-    { key: 'year', header: 'Year' },
-    { key: 'garage', header: 'Garage' },
+    { key: "busNumber", header: "Bus Number" },
+    { key: "alias", header: "Alias" },
+    { key: "manufacturer", header: "Manufacturer" },
+    { key: "year", header: "Year" },
+    { key: "garage", header: "Garage" },
     {
-      key: 'status',
-      header: 'Status',
-      render: (row) => <StatusBadge value={row.status || 'Unknown'} />,
+      key: "status",
+      header: "Status",
+      render: (row) => <StatusBadge value={row.status || "Unknown"} />,
     },
     {
-      key: 'actions',
-      header: 'Actions',
+      key: "actions",
+      header: "Actions",
       render: (row) => (
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: "flex", gap: 8 }}>
           <button className="icon-btn" onClick={() => openEdit(row)}>
             <Pencil size={14} />
           </button>
           <button
             className="icon-btn"
             onClick={() => {
-              if (confirm('Delete this bus?')) {
+              if (confirm("Delete this bus?")) {
                 deleteMutation.mutate(row._id);
               }
             }}
@@ -126,7 +145,9 @@ export default function Buses() {
       subtitle="Fleet inventory and status management"
       actions={
         <button className="btn btn-primary" onClick={openCreate}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <span
+            style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
+          >
             <Plus size={14} />
             Add Bus
           </span>
@@ -148,19 +169,49 @@ export default function Buses() {
         {isLoading ? (
           <p className="card-muted">Loading buses...</p>
         ) : (
-          <DataTable columns={columns} data={buses} emptyText="No buses available" />
+          <DataTable
+            columns={columns}
+            data={buses}
+            emptyText="No buses available"
+          />
         )}
       </DashboardCard>
 
-      <Modal isOpen={isModalOpen} onClose={closeModal} title={editingBus ? 'Edit Bus' : 'Add Bus'}>
+      <Modal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        title={editingBus ? "Edit Bus" : "Add Bus"}
+      >
         <form className="form-stack" onSubmit={handleSubmit}>
           <div className="form-grid">
-            <FormField label="Bus Number" value={form.busNumber} onChange={(value) => setForm({ ...form, busNumber: value })} required />
-            <FormField label="Alias" value={form.alias} onChange={(value) => setForm({ ...form, alias: value })} required />
-            <FormField label="Manufacturer" value={form.manufacturer} onChange={(value) => setForm({ ...form, manufacturer: value })} />
-            <FormField label="Model" value={form.model} onChange={(value) => setForm({ ...form, model: value })} />
-            <FormField label="Year" type="number" value={form.year} onChange={(value) => setForm({ ...form, year: value })} />
-            <FormField label="Garage" value={form.garage} onChange={(value) => setForm({ ...form, garage: value })} />
+            <FormField
+              label="Bus Number"
+              value={form.busNumber}
+              onChange={(value) => setForm({ ...form, busNumber: value })}
+              required
+            />
+            <FormField
+              label="Alias"
+              value={form.alias}
+              onChange={(value) => setForm({ ...form, alias: value })}
+              required
+            />
+            <FormField
+              label="Manufacturer"
+              value={form.manufacturer}
+              onChange={(value) => setForm({ ...form, manufacturer: value })}
+            />
+            <FormField
+              label="Year"
+              type="number"
+              value={form.year}
+              onChange={(value) => setForm({ ...form, year: value })}
+            />
+            <FormField
+              label="Garage"
+              value={form.garage}
+              onChange={(value) => setForm({ ...form, garage: value })}
+            />
           </div>
           <FormField
             label="Status"
@@ -168,17 +219,21 @@ export default function Buses() {
             value={form.status}
             onChange={(value) => setForm({ ...form, status: value })}
             options={[
-              { value: 'Active', label: 'Active' },
-              { value: 'Inactive', label: 'Inactive' },
-              { value: 'Maintenance', label: 'Maintenance' },
-              { value: 'Retired', label: 'Retired' },
+              { value: "Operating", label: "Operating" },
+              { value: "Inactive", label: "Inactive" },
+              { value: "Maintenance", label: "Maintenance" },
+              { value: "Retired", label: "Retired" },
             ]}
           />
           <div className="form-actions">
             <button className="btn btn-primary" type="submit">
-              {editingBus ? 'Save Changes' : 'Create Bus'}
+              {editingBus ? "Save Changes" : "Create Bus"}
             </button>
-            <button className="btn btn-secondary" type="button" onClick={closeModal}>
+            <button
+              className="btn btn-secondary"
+              type="button"
+              onClick={closeModal}
+            >
               Cancel
             </button>
           </div>

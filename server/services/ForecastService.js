@@ -1,9 +1,9 @@
-const MaintenanceRecord = require('../models/MaintenanceRecord');
-const MaintenanceForecast = require('../models/MaintenanceForecast');
-const PartsForecast = require('../models/PartsForecast');
-const ServicePart = require('../models/ServicePart');
-const Bus = require('../models/Bus');
-const MaintenanceService = require('./MaintenanceService');
+const MaintenanceRecord = require("../models/MaintenanceRecord");
+const MaintenanceForecast = require("../models/MaintenanceForecast");
+const PartsForecast = require("../models/PartsForecast");
+const ServicePart = require("../models/ServicePart");
+const Bus = require("../models/Bus");
+const MaintenanceService = require("./MaintenanceService");
 
 const PLANNED_MONTHLY_DISTANCE = 5000; // Default km/month — configurable
 
@@ -24,13 +24,15 @@ class ForecastService {
     for (const record of records) {
       if (record.unitsToGoKm <= 0 && record.daysLate <= 0) continue;
 
-      const daysUntilService = record.unitsToGoKm > 0
-        ? Math.round(record.unitsToGoKm / avgDailyKm)
-        : 0;
+      const daysUntilService =
+        record.unitsToGoKm > 0
+          ? Math.round(record.unitsToGoKm / avgDailyKm)
+          : 0;
 
-      const urgencyScore = await MaintenanceService.calculateUrgencyScore(record);
+      const urgencyScore =
+        await MaintenanceService.calculateUrgencyScore(record);
 
-      const windows = ['7', '14', '30'];
+      const windows = ["7", "14", "30"];
       for (const window of windows) {
         if (daysUntilService <= parseInt(window) || record.unitsLateKm > 0) {
           forecasts.push({
@@ -62,18 +64,18 @@ class ForecastService {
     // Clear old parts forecasts
     await PartsForecast.deleteMany({});
 
-    // Get bus models for lookups
+    // Get bus manufacturer values for lookups
     const buses = await Bus.find().lean();
     const busModelMap = new Map();
     for (const bus of buses) {
-      busModelMap.set(bus.alias, bus.model);
+      busModelMap.set(bus.alias, bus.manufacturer || "");
     }
 
     // Aggregate parts by partNumber and window
     const partsMap = new Map();
 
     for (const forecast of maintenanceForecasts) {
-      const busModel = busModelMap.get(forecast.busAlias) || '';
+      const busModel = busModelMap.get(forecast.busAlias) || "";
       const serviceParts = await ServicePart.find({
         serviceType: forecast.serviceType,
         busModel,
@@ -105,7 +107,8 @@ class ForecastService {
    * Run full forecast pipeline (maintenance → parts)
    */
   static async runFullForecast() {
-    const maintenanceForecasts = await ForecastService.generateMaintenanceForecast();
+    const maintenanceForecasts =
+      await ForecastService.generateMaintenanceForecast();
     const partsForecasts = await ForecastService.generatePartsForecast();
     return { maintenanceForecasts, partsForecasts };
   }
