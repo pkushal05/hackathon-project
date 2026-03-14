@@ -138,7 +138,7 @@ export default function Maintenance() {
     {
       key: "daysLate",
       header: "Days Late",
-      render: (row) => `${row.dayslate || 0} d`,
+      render: (row) => `${row.daysLate || 0} d`,
     },
     {
       key: "actions",
