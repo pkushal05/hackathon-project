@@ -1,109 +1,165 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { partsApi } from '../api/client';
 import { useState } from 'react';
-import { Plus, Pencil, Trash2, Search, Package } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { partsApi } from '../api/client';
 import Modal from '../components/Modal';
+import PageContainer from '../components/ui/PageContainer';
+import DashboardCard from '../components/ui/DashboardCard';
+import DataTable from '../components/ui/DataTable';
+import FormField from '../components/ui/FormField';
 
-const emptyPart = { partNumber: '', name: '', category: '', manufacturer: '', unit: 'each' };
+const emptyPart = {
+  partNumber: '',
+  name: '',
+  category: '',
+  manufacturer: '',
+  unit: 'each',
+};
 
 export default function Parts() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingPart, setEditingPart] = useState(null);
   const [form, setForm] = useState(emptyPart);
 
   const { data, isLoading } = useQuery({ queryKey: ['parts'], queryFn: partsApi.getAll });
-  const createMut = useMutation({ mutationFn: partsApi.create, onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['parts'] }); closeModal(); } });
-  const updateMut = useMutation({ mutationFn: ({ id, data }) => partsApi.update(id, data), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['parts'] }); closeModal(); } });
-  const deleteMut = useMutation({ mutationFn: partsApi.remove, onSuccess: () => queryClient.invalidateQueries({ queryKey: ['parts'] }) });
 
-  const parts = (data?.data || []).filter(p =>
-    p.partNumber?.toLowerCase().includes(search.toLowerCase()) ||
-    p.name?.toLowerCase().includes(search.toLowerCase()) ||
-    p.category?.toLowerCase().includes(search.toLowerCase())
-  );
+  const createMutation = useMutation({
+    mutationFn: partsApi.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['parts'] });
+      closeModal();
+    },
+  });
 
-  function openCreate() { setEditing(null); setForm(emptyPart); setModalOpen(true); }
-  function openEdit(p) { setEditing(p); setForm({ ...p }); setModalOpen(true); }
-  function closeModal() { setModalOpen(false); setEditing(null); }
-  function handleSubmit(e) {
-    e.preventDefault();
-    if (editing) updateMut.mutate({ id: editing._id, data: form });
-    else createMut.mutate(form);
+  const updateMutation = useMutation({
+    mutationFn: ({ id, payload }) => partsApi.update(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['parts'] });
+      closeModal();
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: partsApi.remove,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['parts'] }),
+  });
+
+  const rows = (data?.data || []).filter((item) => {
+    const q = search.toLowerCase();
+    return (
+      item.partNumber?.toLowerCase().includes(q) ||
+      item.name?.toLowerCase().includes(q) ||
+      item.category?.toLowerCase().includes(q)
+    );
+  });
+
+  function openCreate() {
+    setEditingPart(null);
+    setForm(emptyPart);
+    setIsModalOpen(true);
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="page-header flex items-start justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="page-title">Parts Catalog</h1>
-          <p className="page-subtitle">Manage maintenance parts inventory</p>
+  function openEdit(part) {
+    setEditingPart(part);
+    setForm({ ...part });
+    setIsModalOpen(true);
+  }
+
+  function closeModal() {
+    setIsModalOpen(false);
+    setEditingPart(null);
+    setForm(emptyPart);
+  }
+
+  function handleSubmit(event) {
+    event.preventDefault();
+    if (editingPart) {
+      updateMutation.mutate({ id: editingPart._id, payload: form });
+      return;
+    }
+    createMutation.mutate(form);
+  }
+
+  const columns = [
+    { key: 'partNumber', header: 'Part Number' },
+    { key: 'name', header: 'Name' },
+    { key: 'category', header: 'Category' },
+    { key: 'manufacturer', header: 'Manufacturer' },
+    { key: 'unit', header: 'Unit' },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (row) => (
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="icon-btn" onClick={() => openEdit(row)}>
+            <Pencil size={14} />
+          </button>
+          <button
+            className="icon-btn"
+            onClick={() => {
+              if (confirm('Delete this part?')) {
+                deleteMutation.mutate(row._id);
+              }
+            }}
+          >
+            <Trash2 size={14} />
+          </button>
         </div>
-        <button onClick={openCreate} className="btn-glow flex items-center gap-2">
-          <Plus className="w-4 h-4" /> Add Part
+      ),
+    },
+  ];
+
+  return (
+    <PageContainer
+      title="Parts"
+      subtitle="Parts catalog and procurement planning"
+      actions={
+        <button className="btn btn-primary" onClick={openCreate}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <Plus size={14} />
+            Add Part
+          </span>
         </button>
-      </div>
+      }
+    >
+      <DashboardCard>
+        <input
+          className="search-input"
+          placeholder="Search by part number, name, or category"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+        />
+      </DashboardCard>
 
-      <div className="search-bar flex items-center gap-3 px-4 py-3">
-        <Search className="w-4 h-4 text-slate-600" />
-        <input className="bg-transparent outline-none flex-1 text-sm text-slate-300 placeholder:text-slate-700"
-          placeholder="Search parts by number, name, or category…"
-          value={search} onChange={e => setSearch(e.target.value)} />
-      </div>
-
-      <div className="glass-card overflow-hidden">
+      <DashboardCard>
         {isLoading ? (
-          <div className="flex items-center justify-center h-48">
-            <div className="w-10 h-10 rounded-full border-2 border-indigo-500/20 border-t-indigo-500 animate-spin" />
-          </div>
-        ) : parts.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-state-icon"><Package className="w-7 h-7 text-indigo-500/40" /></div>
-            <p className="text-sm font-semibold text-slate-400 mt-2">No parts found</p>
-            <p className="text-xs text-slate-700 mt-1">Add parts to your catalog</p>
-          </div>
+          <p className="card-muted">Loading parts...</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="data-table">
-              <thead><tr><th>Part Number</th><th>Name</th><th>Category</th><th>Manufacturer</th><th>Unit</th><th></th></tr></thead>
-              <tbody>
-                {parts.map(p => (
-                  <tr key={p._id}>
-                    <td><span className="font-mono text-xs font-bold text-indigo-400/80">{p.partNumber}</span></td>
-                    <td><span className="font-medium text-slate-200">{p.name}</span></td>
-                    <td>{p.category ? <span className="badge badge-info">{p.category}</span> : <span className="text-slate-700">—</span>}</td>
-                    <td className="text-slate-400">{p.manufacturer || <span className="text-slate-700">—</span>}</td>
-                    <td className="text-slate-500">{p.unit}</td>
-                    <td>
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => openEdit(p)} className="action-btn action-btn-edit"><Pencil className="w-3.5 h-3.5 text-indigo-400/60" /></button>
-                        <button onClick={() => { if (confirm('Delete?')) deleteMut.mutate(p._id); }} className="action-btn action-btn-delete"><Trash2 className="w-3.5 h-3.5 text-rose-400/60" /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable columns={columns} data={rows} emptyText="No parts available" />
         )}
-      </div>
+      </DashboardCard>
 
-      <Modal isOpen={modalOpen} onClose={closeModal} title={editing ? 'Edit Part' : 'Add New Part'}>
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="grid grid-cols-2 gap-4">
-            <div><label className="form-label">Part Number</label><input className="form-input" required placeholder="OIL-FILTER-01" value={form.partNumber} onChange={e => setForm({ ...form, partNumber: e.target.value })} /></div>
-            <div><label className="form-label">Name</label><input className="form-input" required placeholder="Oil Filter" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
-            <div><label className="form-label">Category</label><input className="form-input" placeholder="Filters" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} /></div>
-            <div><label className="form-label">Manufacturer</label><input className="form-input" placeholder="Fleetguard" value={form.manufacturer} onChange={e => setForm({ ...form, manufacturer: e.target.value })} /></div>
+      <Modal isOpen={isModalOpen} onClose={closeModal} title={editingPart ? 'Edit Part' : 'Add Part'}>
+        <form className="form-stack" onSubmit={handleSubmit}>
+          <div className="form-grid">
+            <FormField label="Part Number" value={form.partNumber} onChange={(value) => setForm({ ...form, partNumber: value })} required />
+            <FormField label="Name" value={form.name} onChange={(value) => setForm({ ...form, name: value })} required />
+            <FormField label="Category" value={form.category} onChange={(value) => setForm({ ...form, category: value })} />
+            <FormField label="Manufacturer" value={form.manufacturer} onChange={(value) => setForm({ ...form, manufacturer: value })} />
           </div>
-          <div><label className="form-label">Unit</label><input className="form-input" placeholder="each" value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })} /></div>
-          <div className="flex gap-3 pt-3">
-            <button type="submit" className="btn-glow flex-1">{editing ? 'Save Changes' : 'Create Part'}</button>
-            <button type="button" onClick={closeModal} className="btn-outline flex-1">Cancel</button>
+          <FormField label="Unit" value={form.unit} onChange={(value) => setForm({ ...form, unit: value })} />
+          <div className="form-actions">
+            <button className="btn btn-primary" type="submit">
+              {editingPart ? 'Save Changes' : 'Create Part'}
+            </button>
+            <button className="btn btn-secondary" type="button" onClick={closeModal}>
+              Cancel
+            </button>
           </div>
         </form>
       </Modal>
-    </div>
+    </PageContainer>
   );
 }

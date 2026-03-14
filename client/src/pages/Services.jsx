@@ -1,123 +1,196 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { servicesApi } from '../api/client';
 import { useState } from 'react';
-import { Plus, Pencil, Trash2, Search, Layers } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { servicesApi } from '../api/client';
 import Modal from '../components/Modal';
+import PageContainer from '../components/ui/PageContainer';
+import DashboardCard from '../components/ui/DashboardCard';
+import DataTable from '../components/ui/DataTable';
+import FormField from '../components/ui/FormField';
+import StatusBadge from '../components/ui/StatusBadge';
 
-const emptyService = { name: '', description: '', severityWeight: 1, includes: [] };
+const emptyService = {
+  name: '',
+  description: '',
+  severityWeight: 1,
+  includes: [],
+};
+
+function getSeverityVariant(weight) {
+  if (weight >= 4) return 'danger';
+  if (weight >= 3) return 'orange';
+  if (weight >= 2) return 'warning';
+  return 'success';
+}
 
 export default function Services() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingService, setEditingService] = useState(null);
   const [form, setForm] = useState(emptyService);
   const [includesInput, setIncludesInput] = useState('');
 
   const { data, isLoading } = useQuery({ queryKey: ['services'], queryFn: servicesApi.getAll });
-  const createMut = useMutation({ mutationFn: servicesApi.create, onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['services'] }); closeModal(); } });
-  const updateMut = useMutation({ mutationFn: ({ id, data }) => servicesApi.update(id, data), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['services'] }); closeModal(); } });
-  const deleteMut = useMutation({ mutationFn: servicesApi.remove, onSuccess: () => queryClient.invalidateQueries({ queryKey: ['services'] }) });
 
-  const services = (data?.data || []).filter(s => s.name?.toLowerCase().includes(search.toLowerCase()));
+  const createMutation = useMutation({
+    mutationFn: servicesApi.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['services'] });
+      closeModal();
+    },
+  });
 
-  function openCreate() { setEditing(null); setForm(emptyService); setIncludesInput(''); setModalOpen(true); }
-  function openEdit(s) { setEditing(s); setForm({ ...s }); setIncludesInput(s.includes?.join(', ') || ''); setModalOpen(true); }
-  function closeModal() { setModalOpen(false); setEditing(null); }
-  function handleSubmit(e) {
-    e.preventDefault();
-    const payload = { ...form, includes: includesInput.split(',').map(s => s.trim()).filter(Boolean) };
-    if (editing) updateMut.mutate({ id: editing._id, data: payload });
-    else createMut.mutate(payload);
+  const updateMutation = useMutation({
+    mutationFn: ({ id, payload }) => servicesApi.update(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['services'] });
+      closeModal();
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: servicesApi.remove,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['services'] }),
+  });
+
+  const rows = (data?.data || []).filter((service) =>
+    service.name?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  function openCreate() {
+    setEditingService(null);
+    setForm(emptyService);
+    setIncludesInput('');
+    setIsModalOpen(true);
   }
 
-  const severityBadge = (w) => {
-    if (w >= 4) return 'badge-critical';
-    if (w >= 3) return 'badge-warning';
-    if (w >= 2) return 'badge-info';
-    return 'badge-success';
-  };
+  function openEdit(service) {
+    setEditingService(service);
+    setForm({ ...service });
+    setIncludesInput((service.includes || []).join(', '));
+    setIsModalOpen(true);
+  }
+
+  function closeModal() {
+    setIsModalOpen(false);
+    setEditingService(null);
+    setForm(emptyService);
+    setIncludesInput('');
+  }
+
+  function handleSubmit(event) {
+    event.preventDefault();
+    const payload = {
+      ...form,
+      includes: includesInput
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean),
+    };
+
+    if (editingService) {
+      updateMutation.mutate({ id: editingService._id, payload });
+      return;
+    }
+
+    createMutation.mutate(payload);
+  }
+
+  const columns = [
+    { key: 'name', header: 'Name' },
+    { key: 'description', header: 'Description' },
+    {
+      key: 'severityWeight',
+      header: 'Severity',
+      render: (row) => <StatusBadge value={`Weight ${row.severityWeight || 0}`} variant={getSeverityVariant(row.severityWeight || 0)} />,
+    },
+    {
+      key: 'includes',
+      header: 'Includes',
+      render: (row) => (row.includes || []).join(', ') || 'None',
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (row) => (
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="icon-btn" onClick={() => openEdit(row)}>
+            <Pencil size={14} />
+          </button>
+          <button
+            className="icon-btn"
+            onClick={() => {
+              if (confirm('Delete this service type?')) {
+                deleteMutation.mutate(row._id);
+              }
+            }}
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <div className="space-y-6">
-      <div className="page-header flex items-start justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="page-title">Service Types</h1>
-          <p className="page-subtitle">Define maintenance service levels and hierarchies</p>
-        </div>
-        <button onClick={openCreate} className="btn-glow flex items-center gap-2"><Plus className="w-4 h-4" /> Add Service</button>
-      </div>
+    <PageContainer
+      title="Service Types"
+      subtitle="Define service ladders used in maintenance planning"
+      actions={
+        <button className="btn btn-primary" onClick={openCreate}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <Plus size={14} />
+            Add Service
+          </span>
+        </button>
+      }
+    >
+      <DashboardCard>
+        <input
+          className="search-input"
+          placeholder="Search service name"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+        />
+      </DashboardCard>
 
-      <div className="search-bar flex items-center gap-3 px-4 py-3">
-        <Search className="w-4 h-4 text-slate-600" />
-        <input className="bg-transparent outline-none flex-1 text-sm text-slate-300 placeholder:text-slate-700"
-          placeholder="Search services…" value={search} onChange={e => setSearch(e.target.value)} />
-      </div>
-
-      <div className="glass-card overflow-hidden">
+      <DashboardCard>
         {isLoading ? (
-          <div className="flex items-center justify-center h-48">
-            <div className="w-10 h-10 rounded-full border-2 border-indigo-500/20 border-t-indigo-500 animate-spin" />
-          </div>
-        ) : services.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-state-icon"><Layers className="w-7 h-7 text-indigo-500/40" /></div>
-            <p className="text-sm font-semibold text-slate-400 mt-2">No service types defined</p>
-            <p className="text-xs text-slate-700 mt-1">Define A, B, C, D service levels</p>
-          </div>
+          <p className="card-muted">Loading services...</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="data-table">
-              <thead><tr><th>Name</th><th>Description</th><th>Severity</th><th>Includes</th><th></th></tr></thead>
-              <tbody>
-                {services.map(s => (
-                  <tr key={s._id}>
-                    <td>
-                      <span className="inline-flex items-center justify-center w-10 h-10 rounded-xl font-black text-lg"
-                        style={{ background: 'rgba(99,102,241,0.08)', color: '#818cf8' }}>
-                        {s.name}
-                      </span>
-                    </td>
-                    <td className="text-slate-400">{s.description || <span className="text-slate-700">—</span>}</td>
-                    <td><span className={`badge ${severityBadge(s.severityWeight)}`}>Weight {s.severityWeight}</span></td>
-                    <td>
-                      <div className="flex flex-wrap gap-1.5">
-                        {(s.includes || []).map((inc, i) => (
-                          <span key={i} className="px-2.5 py-1 rounded-lg text-[11px] font-semibold" style={{ background: 'rgba(6,182,212,0.06)', color: '#22d3ee', border: '1px solid rgba(6,182,212,0.1)' }}>{inc}</span>
-                        ))}
-                        {(!s.includes || s.includes.length === 0) && <span className="text-slate-700 text-xs">None</span>}
-                      </div>
-                    </td>
-                    <td>
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => openEdit(s)} className="action-btn action-btn-edit"><Pencil className="w-3.5 h-3.5 text-indigo-400/60" /></button>
-                        <button onClick={() => { if (confirm('Delete?')) deleteMut.mutate(s._id); }} className="action-btn action-btn-delete"><Trash2 className="w-3.5 h-3.5 text-rose-400/60" /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable columns={columns} data={rows} emptyText="No service types found" />
         )}
-      </div>
+      </DashboardCard>
 
-      <Modal isOpen={modalOpen} onClose={closeModal} title={editing ? 'Edit Service Type' : 'Add Service Type'}>
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div><label className="form-label">Name</label><input className="form-input" required placeholder="e.g. D" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
-          <div><label className="form-label">Description</label><input className="form-input" placeholder="Major overhaul" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
-          <div><label className="form-label">Severity Weight (1–10)</label><input className="form-input" type="number" min="1" max="10" value={form.severityWeight} onChange={e => setForm({ ...form, severityWeight: +e.target.value })} /></div>
-          <div>
-            <label className="form-label">Includes (comma-separated)</label>
-            <input className="form-input" placeholder="A, B, C" value={includesInput} onChange={e => setIncludesInput(e.target.value)} />
-            <p className="text-[11px] text-slate-700 mt-2">e.g. Service D includes A, B, C</p>
-          </div>
-          <div className="flex gap-3 pt-3">
-            <button type="submit" className="btn-glow flex-1">{editing ? 'Save Changes' : 'Create Service'}</button>
-            <button type="button" onClick={closeModal} className="btn-outline flex-1">Cancel</button>
+      <Modal isOpen={isModalOpen} onClose={closeModal} title={editingService ? 'Edit Service Type' : 'Add Service Type'}>
+        <form className="form-stack" onSubmit={handleSubmit}>
+          <FormField label="Name" value={form.name} onChange={(value) => setForm({ ...form, name: value })} required />
+          <FormField label="Description" value={form.description} onChange={(value) => setForm({ ...form, description: value })} />
+          <FormField
+            label="Severity Weight"
+            type="number"
+            min={1}
+            max={10}
+            value={form.severityWeight}
+            onChange={(value) => setForm({ ...form, severityWeight: Number(value) })}
+          />
+          <FormField
+            label="Includes (comma-separated)"
+            value={includesInput}
+            onChange={(value) => setIncludesInput(value)}
+            placeholder="A, B, C"
+          />
+          <div className="form-actions">
+            <button className="btn btn-primary" type="submit">
+              {editingService ? 'Save Changes' : 'Create Service'}
+            </button>
+            <button className="btn btn-secondary" type="button" onClick={closeModal}>
+              Cancel
+            </button>
           </div>
         </form>
       </Modal>
-    </div>
+    </PageContainer>
   );
 }
