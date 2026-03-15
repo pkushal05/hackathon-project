@@ -194,7 +194,7 @@ export default function FleetMap() {
                             </div>
                             <div>
                               Days late:{" "}
-                              {vehicle.topMaintenanceRecord.daysLate || 0}
+                              {vehicle.topMaintenanceRecord.dayslate || 0}
                             </div>
                           </div>
                         ) : (

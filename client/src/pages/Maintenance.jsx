@@ -17,7 +17,7 @@ const emptyRecord = {
   lastOdometerReading: 0,
   unitsToGoKm: 0,
   unitsLateKm: 0,
-  daysLate: 0,
+  dayslate: 0,
   reportDate: "",
 };
 
@@ -136,9 +136,9 @@ export default function Maintenance() {
       render: (row) => `${Number(row.unitsLateKm || 0).toLocaleString()} km`,
     },
     {
-      key: "daysLate",
+      key: "dayslate",
       header: "Days Late",
-      render: (row) => `${row.daysLate || 0} d`,
+      render: (row) => `${row.dayslate || 0} d`,
     },
     {
       key: "actions",
@@ -259,9 +259,9 @@ export default function Maintenance() {
             <FormField
               label="Days Late"
               type="number"
-              value={form.daysLate}
+              value={form.dayslate}
               onChange={(value) =>
-                setForm({ ...form, daysLate: Number(value) })
+                setForm({ ...form, dayslate: Number(value) })
               }
             />
             <FormField
