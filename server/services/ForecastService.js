@@ -28,6 +28,12 @@ function normalizeBusModel(value) {
     .trim();
 }
 
+function normalizeQuantity(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return 0;
+  return Math.max(0, Math.round(numeric));
+}
+
 class ForecastService {
   /**
    * Generate maintenance forecast for all records.
@@ -114,13 +120,16 @@ class ForecastService {
       const serviceParts = servicePartMap.get(lookupKey) || [];
 
       for (const sp of serviceParts) {
+        const quantity = normalizeQuantity(sp.quantity);
+        if (quantity <= 0) continue;
+
         const key = `${sp.partNumber}_${forecast.forecastWindow}`;
         if (partsMap.has(key)) {
-          partsMap.get(key).quantity += sp.quantity;
+          partsMap.get(key).quantity += quantity;
         } else {
           partsMap.set(key, {
             partNumber: sp.partNumber,
-            quantity: sp.quantity,
+            quantity,
             forecastWindow: forecast.forecastWindow,
           });
         }
