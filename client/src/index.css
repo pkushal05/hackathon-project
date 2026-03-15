@@ -81,6 +81,21 @@ a {
   gap: var(--space-16);
 }
 
+.auth-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.auth-logo-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: contain;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 4px;
+}
+
 .auth-title {
   margin: 0;
   font-size: 1.5rem;
@@ -161,6 +176,21 @@ a {
   border-bottom: 1px solid rgba(148, 163, 184, 0.2);
 }
 
+.brand-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-logo-image {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  object-fit: contain;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 3px;
+}
+
 .brand-title {
   margin: 0;
   font-size: 1.25rem;
@@ -225,6 +255,15 @@ a {
 .top-nav-meta {
   color: var(--text-muted);
   font-size: 0.85rem;
+}
+
+.top-nav-logo {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  object-fit: contain;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 2px;
 }
 
 .main-scroll {

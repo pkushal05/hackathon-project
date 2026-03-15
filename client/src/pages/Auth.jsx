@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { authApi } from "../api/client";
+import logo from "../assets/logo.png";
 
 export default function AuthPage({ onAuthenticated }) {
   const [mode, setMode] = useState("login");
@@ -64,7 +65,10 @@ export default function AuthPage({ onAuthenticated }) {
   return (
     <div className="auth-shell">
       <div className="auth-card">
-        <h1 className="auth-title">FleetPulse DRT</h1>
+        <div className="auth-brand-row">
+          <img src={logo} alt="DRT logo" className="auth-logo-image" />
+          <h1 className="auth-title">FleetPulse DRT</h1>
+        </div>
         <p className="auth-subtitle">
           Sign in to access fleet maintenance intelligence.
         </p>

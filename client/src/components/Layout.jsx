@@ -14,6 +14,7 @@ import {
   X,
   LogOut,
 } from "lucide-react";
+import logo from "../assets/logo.png";
 
 const baseNavItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -70,8 +71,13 @@ export default function Layout({ children, user, onLogout }) {
         transition={{ duration: 0.2, ease: "easeOut" }}
       >
         <div className="sidebar-logo">
-          <h2 className="brand-title">FleetPulse DRT</h2>
-          <p className="brand-subtitle">Transit Operations Platform</p>
+          <div className="brand-header">
+            <img src={logo} alt="DRT logo" className="brand-logo-image" />
+            <div>
+              <h2 className="brand-title">FleetPulse DRT</h2>
+              <p className="brand-subtitle">Transit Operations Platform</p>
+            </div>
+          </div>
         </div>
 
         <nav className="nav-list">
@@ -101,6 +107,7 @@ export default function Layout({ children, user, onLogout }) {
             >
               {open ? <X size={16} /> : <Menu size={16} />}
             </button>
+            <img src={logo} alt="DRT logo" className="top-nav-logo" />
             <div>
               <div style={{ fontWeight: 700, fontSize: "0.95rem" }}>{page}</div>
               <div className="top-nav-meta">Agency Operations Dashboard</div>
