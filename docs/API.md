@@ -1,81 +1,196 @@
 # FleetPulse DRT API Documentation
 
 ## Base URL
-```
-http://localhost:5000/api
+
+`http://localhost:5000/api`
+
+## Authentication
+
+Most endpoints require JWT auth.
+
+- Header: `Authorization: Bearer <token>`
+- Public endpoints: `GET /health`, `POST /auth/register`, `POST /auth/login`
+
+## Standard Response Shape
+
+Success:
+
+```json
+{
+  "success": true,
+  "data": {}
+}
 ```
 
----
+Error:
+
+```json
+{
+  "success": false,
+  "error": "Error message"
+}
+```
+
+Validation error:
+
+```json
+{
+  "success": false,
+  "errors": ["field is required"]
+}
+```
+
+## Health
+
+### GET /health
+
+Health check endpoint.
+
+## Auth
+
+### POST /auth/register
+
+Register user.
+
+Request body:
+
+```json
+{
+  "name": "Transit Admin",
+  "email": "admin@example.com",
+  "password": "strong-password"
+}
+```
+
+### POST /auth/login
+
+Login user.
+
+Request body:
+
+```json
+{
+  "email": "admin@example.com",
+  "password": "strong-password"
+}
+```
+
+### GET /auth/me
+
+Return current authenticated user.
+
+### GET /auth/pending-users
+
+Admin only.
+
+### GET /auth/users
+
+Admin only.
+
+### PATCH /auth/approve/:id
+
+Admin only.
+
+### PATCH /auth/deny/:id
+
+Admin only.
+
+### PATCH /auth/make-admin/:id
+
+Admin only.
 
 ## Buses
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/buses` | List all buses |
-| GET | `/buses/:id` | Get bus by ID |
-| POST | `/buses` | Create a bus |
-| PUT | `/buses/:id` | Update a bus |
-| DELETE | `/buses/:id` | Delete a bus |
+### GET /buses
 
-### Bus Object
+List all buses.
+
+### GET /buses/:id
+
+Get bus by id.
+
+### POST /buses
+
+Create bus.
+
 ```json
 {
   "busNumber": "1001",
   "alias": "BUS-1001",
   "manufacturer": "Nova Bus",
-  "model": "LFS",
   "year": 2020,
   "garage": "Central",
-  "status": "Active"
+  "status": "Operating"
 }
 ```
 
----
+### PUT /buses/:id
+
+Update bus.
+
+### DELETE /buses/:id
+
+Delete bus.
 
 ## Maintenance Records
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/maintenance` | List all records (with urgency scores) |
-| GET | `/maintenance/health` | Fleet health summary |
-| GET | `/maintenance/:id` | Get record by ID |
-| POST | `/maintenance` | Create a record |
-| PUT | `/maintenance/:id` | Update a record |
-| DELETE | `/maintenance/:id` | Delete a record |
+### GET /maintenance
 
-### Maintenance Record Object
+List maintenance records with urgency scoring.
+
+### GET /maintenance/health
+
+Fleet health summary.
+
+### GET /maintenance/:id
+
+Get maintenance record by id.
+
+### POST /maintenance
+
+Create maintenance record.
+
 ```json
 {
   "busAlias": "BUS-1001",
   "pmNumber": "PM-001",
   "pmDescription": "Oil Change",
-  "serviceType": "A",
   "lastOdometerReading": 125000,
   "nextTriggerKm": 130000,
   "unitsToGoKm": 5000,
   "unitsLateKm": 0,
-  "daysLate": 0,
+  "dayslate": 0,
   "frequencyKm": 10000,
   "toleranceKm": 500,
-  "reportDate": "2025-01-15",
+  "reportDate": "2026-03-15",
+  "serviceType": "A",
   "pmStatus": "Active",
   "assetStatus": "Operating"
 }
 ```
 
----
+### PUT /maintenance/:id
+
+Update maintenance record.
+
+### DELETE /maintenance/:id
+
+Delete maintenance record.
 
 ## Service Types
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/services` | List all service types |
-| GET | `/services/:id` | Get service type by ID |
-| POST | `/services` | Create a service type |
-| PUT | `/services/:id` | Update a service type |
-| DELETE | `/services/:id` | Delete a service type |
+### GET /services
 
-### Service Type Object
+List service types.
+
+### GET /services/:id
+
+Get service type by id.
+
+### POST /services
+
+Create service type.
+
 ```json
 {
   "name": "D",
@@ -85,19 +200,28 @@ http://localhost:5000/api
 }
 ```
 
----
+### PUT /services/:id
+
+Update service type.
+
+### DELETE /services/:id
+
+Delete service type.
 
 ## Parts
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/parts` | List all parts |
-| GET | `/parts/:id` | Get part by ID |
-| POST | `/parts` | Create a part |
-| PUT | `/parts/:id` | Update a part |
-| DELETE | `/parts/:id` | Delete a part |
+### GET /parts
 
-### Part Object
+List parts.
+
+### GET /parts/:id
+
+Get part by id.
+
+### POST /parts
+
+Create part.
+
 ```json
 {
   "partNumber": "OIL-FILTER-01",
@@ -108,75 +232,131 @@ http://localhost:5000/api
 }
 ```
 
----
+### PUT /parts/:id
+
+Update part.
+
+### DELETE /parts/:id
+
+Delete part.
 
 ## Service Parts
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/service-parts` | List service parts (filter: `?serviceType=A&busModel=LFS`) |
-| GET | `/service-parts/:id` | Get by ID |
-| POST | `/service-parts` | Create |
-| PUT | `/service-parts/:id` | Update |
-| DELETE | `/service-parts/:id` | Delete |
+### GET /service-parts
 
-### Service Part Object
+List service-part mappings.
+
+Query params:
+
+- `serviceType` (optional)
+- `busModel` (optional)
+
+### GET /service-parts/:id
+
+Get service-part mapping by id.
+
+### POST /service-parts
+
+Create service-part mapping.
+
 ```json
 {
   "serviceType": "A",
-  "busModel": "LFS",
+  "busModel": "Nova Bus",
   "partNumber": "OIL-FILTER-01",
   "quantity": 2
 }
 ```
 
----
+### PUT /service-parts/:id
 
-## Maintenance Forecast
+Update service-part mapping.
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/forecast/maintenance` | List forecasts (filter: `?window=7`) |
-| POST | `/forecast/maintenance/generate` | Generate forecasts |
-| DELETE | `/forecast/maintenance/:id` | Delete a forecast |
+### DELETE /service-parts/:id
 
----
+Delete service-part mapping.
 
-## Parts Forecast
+## Forecast: Maintenance
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/forecast/parts` | List forecasts (filter: `?window=30`) |
-| POST | `/forecast/parts/generate` | Generate forecasts |
-| DELETE | `/forecast/parts/:id` | Delete a forecast |
+### GET /forecast/maintenance
 
----
+List maintenance forecasts.
 
-## GTFS & Dashboard
+Query params:
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/vehicles` | GTFS-RT vehicle positions (enriched) |
-| GET | `/dashboard` | Dashboard statistics |
-| POST | `/dashboard/generate` | Run full forecast pipeline |
-| GET | `/health` | API health check |
+- `window` (optional): `7`, `14`, `30`
 
----
+### POST /forecast/maintenance/generate
 
-## Response Format
+Generate maintenance forecasts.
 
-All responses follow:
+### DELETE /forecast/maintenance/:id
+
+Delete maintenance forecast.
+
+## Forecast: Parts
+
+### GET /forecast/parts
+
+List parts forecasts.
+
+Query params:
+
+- `window` (optional): `7`, `14`, `30`
+
+### POST /forecast/parts/generate
+
+Generate parts forecasts.
+
+### DELETE /forecast/parts/:id
+
+Delete parts forecast.
+
+## Dashboard and GTFS
+
+### GET /vehicles
+
+Get GTFS-Realtime vehicle positions enriched with urgency and bus metadata.
+
+### GET /dashboard
+
+Get dashboard aggregate stats and chart datasets.
+
+### POST /dashboard/generate
+
+Run full forecast pipeline (maintenance + parts).
+
+Response example:
+
 ```json
 {
   "success": true,
-  "data": { ... }
+  "data": {
+    "maintenanceCount": 42,
+    "partsCount": 27
+  }
 }
 ```
 
-Errors:
+## Chat
+
+### POST /chat
+
+Answer operational questions via AI (if configured) with deterministic fallback.
+
+Request body:
+
 ```json
 {
-  "success": false,
-  "error": "Error message"
+  "message": "How many buses are overdue?"
+}
+```
+
+Response example:
+
+```json
+{
+  "reply": "There are 5 overdue buses out of 34 total buses.",
+  "source": "fallback"
 }
 ```
