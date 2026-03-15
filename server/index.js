@@ -61,6 +61,7 @@ app.use("/api/parts", require("./routes/parts"));
 app.use("/api/service-parts", require("./routes/serviceParts"));
 app.use("/api/forecast/maintenance", require("./routes/forecastMaintenance"));
 app.use("/api/forecast/parts", require("./routes/forecastParts"));
+app.use("/api/chat", require("./routes/chat"));
 app.use("/api", require("./routes/api"));
 
 // Error handling

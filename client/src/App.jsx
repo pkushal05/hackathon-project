@@ -12,6 +12,7 @@ import Forecast from "./pages/Forecast";
 import AboutPage from "./pages/About";
 import AuthPage from "./pages/Auth";
 import AdminApprovals from "./pages/AdminApprovals";
+import Chatbot from "./components/Chatbot";
 import { authApi, getStoredToken, setStoredToken } from "./api/client";
 
 const queryClient = new QueryClient({
@@ -128,6 +129,7 @@ export default function App() {
               />
               <Route path="/auth" element={<Navigate to="/" replace />} />
             </Routes>
+            <Chatbot />
           </Layout>
         )}
       </BrowserRouter>
