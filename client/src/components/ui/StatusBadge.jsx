@@ -7,11 +7,14 @@ const DEFAULT_MAP = {
   warning: "warning",
   inactive: "warning",
   soon: "warning",
+  low: "warning",
+  medium: "warning",
   high: "orange",
   overdue: "danger",
   critical: "danger",
   maintenance: "orange",
   retired: "slate",
+  unknown: "slate",
   info: "slate",
 };
 

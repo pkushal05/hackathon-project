@@ -8,7 +8,7 @@ import {
   Wrench,
   Package,
   TrendingUp,
-  Settings,
+  Info,
   Menu,
   X,
 } from "lucide-react";
@@ -20,7 +20,7 @@ const navItems = [
   { to: "/maintenance", label: "Maintenance", icon: Wrench },
   { to: "/parts", label: "Parts", icon: Package },
   { to: "/forecast", label: "Forecast", icon: TrendingUp },
-  { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/about", label: "About", icon: Info },
 ];
 
 export default function Layout({ children }) {

@@ -7,6 +7,27 @@ const MaintenanceService = require("./MaintenanceService");
 
 const PLANNED_MONTHLY_DISTANCE = 5000; // Default km/month — configurable
 
+function normalizeText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function normalizeServiceType(value) {
+  return normalizeText(value)
+    .replace(/\bservice\b/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizeBusModel(value) {
+  return normalizeText(value)
+    .replace(/\bhev\b/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 class ForecastService {
   /**
    * Generate maintenance forecast for all records.
@@ -68,18 +89,29 @@ class ForecastService {
     const buses = await Bus.find().lean();
     const busModelMap = new Map();
     for (const bus of buses) {
-      busModelMap.set(bus.alias, bus.manufacturer || "");
+      const aliasKey = String(bus.alias || "").trim();
+      busModelMap.set(aliasKey, bus.manufacturer || "");
+    }
+
+    // Preload and index service-part rules by normalized keys.
+    const servicePartRules = await ServicePart.find().lean();
+    const servicePartMap = new Map();
+    for (const rule of servicePartRules) {
+      const key = `${normalizeServiceType(rule.serviceType)}|${normalizeBusModel(rule.busModel)}`;
+      if (!servicePartMap.has(key)) {
+        servicePartMap.set(key, []);
+      }
+      servicePartMap.get(key).push(rule);
     }
 
     // Aggregate parts by partNumber and window
     const partsMap = new Map();
 
     for (const forecast of maintenanceForecasts) {
-      const busModel = busModelMap.get(forecast.busAlias) || "";
-      const serviceParts = await ServicePart.find({
-        serviceType: forecast.serviceType,
-        busModel,
-      }).lean();
+      const aliasKey = String(forecast.busAlias || "").trim();
+      const busModel = busModelMap.get(aliasKey) || "";
+      const lookupKey = `${normalizeServiceType(forecast.serviceType)}|${normalizeBusModel(busModel)}`;
+      const serviceParts = servicePartMap.get(lookupKey) || [];
 
       for (const sp of serviceParts) {
         const key = `${sp.partNumber}_${forecast.forecastWindow}`;
