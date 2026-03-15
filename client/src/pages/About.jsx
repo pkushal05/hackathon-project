@@ -1,91 +1,100 @@
 import PageContainer from "../components/ui/PageContainer";
 import DashboardCard from "../components/ui/DashboardCard";
 import SectionHeader from "../components/ui/SectionHeader";
+import { useQuery } from "@tanstack/react-query";
 
-const quickStartSteps = [
-  "Open Dashboard to view fleet health, overdue counts, and forecast totals.",
-  "Visit Maintenance to review records and verify service types.",
-  "Go to Forecast and click Generate to refresh maintenance and parts forecasts.",
-  "Use Fleet Map to monitor live vehicle positions and top maintenance alerts.",
-  "Use Parts and Service Parts to keep inventory mappings up to date.",
+const githubIds = ["devpatel47", "milanpatel9999", "pkushal05", "si6104"];
+
+async function fetchDevelopers() {
+  const responses = await Promise.all(
+    githubIds.map(async (username) => {
+      const response = await fetch(`https://api.github.com/users/${username}`);
+      if (!response.ok) {
+        throw new Error("Unable to load developer profiles from GitHub");
+      }
+      const data = await response.json();
+      return {
+        login: data.login,
+        name: data.name || data.login,
+        avatarUrl: data.avatar_url,
+        profileUrl: data.html_url,
+        bio: data.bio || "No bio available",
+      };
+    }),
+  );
+
+  return responses;
+}
+
+const userGuide = [
+  "Login with your approved account to access the operations workspace.",
+  "Start on Dashboard to review total buses, overdue trends, and due-soon buses.",
+  "Open Fleet Map to inspect live bus positions and maintenance urgency context.",
+  "Manage fleet records in Buses and keep maintenance data updated in Maintenance.",
+  "Maintain part definitions in Parts and service-to-part links in Service Parts.",
+  "Go to Forecast and click Regenerate Forecasts to refresh 7/14/30-day projections.",
+  "Use Admin Approvals (admins only) to approve, deny, or promote users when required.",
 ];
 
 const features = [
   {
-    title: "Dashboard",
+    title: "Live Operations Dashboard",
     detail:
-      "System overview with fleet health summary, service distribution, and demand snapshots.",
+      "Centralized visibility of fleet health, due-soon buses, forecast trends, and parts demand.",
   },
   {
-    title: "Fleet Map",
+    title: "Maintenance + Forecast Engine",
     detail:
-      "Live map with urgency-colored vehicles, popup diagnostics, and maintenance context.",
+      "Generates maintenance and parts forecast windows from current records and mapping rules.",
   },
   {
-    title: "Buses",
+    title: "Admin Access Control",
     detail:
-      "Fleet registry for unit details such as alias, manufacturer, status, and garage.",
+      "JWT-protected APIs with account approval, denial, and admin role management.",
   },
   {
-    title: "Maintenance",
+    title: "Fleet Map Intelligence",
     detail:
-      "Preventive maintenance records with urgency score drivers and due calculations.",
-  },
-  {
-    title: "Parts",
-    detail:
-      "Parts catalog for procurement planning and forecast quantity interpretation.",
-  },
-  {
-    title: "Forecast",
-    detail:
-      "7/14/30-day maintenance and parts demand projections generated from live records.",
+      "Color-coded map markers and contextual details for active transit vehicles.",
   },
 ];
 
-const troubleshooting = [
+const techStack = [
   {
-    issue: "Parts forecast is empty",
-    action:
-      "Run Generate in Forecast and confirm service-part mappings exist for serviceType + bus model combinations.",
+    name: "Frontend",
+    value: "React, Vite, React Query, Leaflet, Recharts",
   },
   {
-    issue: "Map has no vehicles",
-    action:
-      "Check GTFS feed availability and verify backend API health endpoint returns success.",
+    name: "Backend",
+    value: "Node.js, Express, Mongoose",
   },
   {
-    issue: "Unexpected urgency values",
-    action:
-      "Review unitsLateKm, daysLate, and frequencyKm in Maintenance records for outliers.",
-  },
-];
-
-const apiGroups = [
-  {
-    name: "Fleet",
-    endpoints: "GET/POST/PUT/DELETE /api/buses",
+    name: "Database",
+    value: "MongoDB Atlas",
   },
   {
-    name: "Maintenance",
-    endpoints: "GET/POST/PUT/DELETE /api/maintenance",
+    name: "Security",
+    value: "JWT Authentication, Role-based access control",
   },
   {
-    name: "Service Parts",
-    endpoints: "GET /api/service-parts?serviceType=&busModel=",
-  },
-  {
-    name: "Forecast",
-    endpoints:
-      "POST /api/dashboard/generate, GET /api/forecast/maintenance, GET /api/forecast/parts",
+    name: "Deployment",
+    value: "Docker, Nginx",
   },
 ];
 
 export default function AboutPage() {
+  const developersQuery = useQuery({
+    queryKey: ["github-developers"],
+    queryFn: fetchDevelopers,
+    staleTime: 1000 * 60 * 60,
+  });
+
+  const developers = developersQuery.data || [];
+
   return (
     <PageContainer
       title="About"
-      subtitle="FleetPulse DRT platform guide, architecture summary, and operational playbook"
+      subtitle="Platform summary, usage guide, and developer information"
     >
       <DashboardCard>
         <SectionHeader title="What This Platform Does" />
@@ -98,16 +107,27 @@ export default function AboutPage() {
       </DashboardCard>
 
       <DashboardCard>
-        <SectionHeader title="Quick User Guide" />
-        <ol style={{ margin: 0, paddingLeft: 18, display: "grid", gap: 8 }}>
-          {quickStartSteps.map((step) => (
-            <li key={step}>{step}</li>
+        <SectionHeader title="Detailed Quick User Guide" />
+        <ul
+          style={{
+            margin: 0,
+            paddingLeft: 24,
+            display: "grid",
+            gap: 8,
+            listStyleType: "disc",
+            listStylePosition: "outside",
+          }}
+        >
+          {userGuide.map((step) => (
+            <li key={step} style={{ display: "list-item" }}>
+              {step}
+            </li>
           ))}
-        </ol>
+        </ul>
       </DashboardCard>
 
       <DashboardCard>
-        <SectionHeader title="Feature Reference" />
+        <SectionHeader title="Features" />
         <div className="dashboard-grid-2">
           {features.map((feature) => (
             <div key={feature.title}>
@@ -121,63 +141,68 @@ export default function AboutPage() {
       </DashboardCard>
 
       <DashboardCard>
-        <SectionHeader title="Forecast Workflow" />
-        <p style={{ marginTop: 0 }}>
-          The forecast engine computes upcoming maintenance windows (7, 14, and
-          30 days), then aggregates required parts from service-part mappings.
-          If parts forecasts appear empty, validate serviceType and bus model
-          mappings before regenerating.
-        </p>
-      </DashboardCard>
-
-      <DashboardCard>
-        <SectionHeader title="API Surface" />
-        <div className="dashboard-grid-2">
-          {apiGroups.map((group) => (
-            <div key={group.name}>
-              <p className="card-muted" style={{ marginBottom: 6 }}>
-                {group.name}
-              </p>
-              <p style={{ margin: 0 }}>{group.endpoints}</p>
-            </div>
-          ))}
-        </div>
-      </DashboardCard>
-
-      <DashboardCard>
-        <SectionHeader title="Troubleshooting" />
-        <div style={{ display: "grid", gap: 10 }}>
-          {troubleshooting.map((item) => (
-            <div key={item.issue}>
-              <p className="card-muted" style={{ marginBottom: 4 }}>
-                {item.issue}
-              </p>
-              <p style={{ margin: 0 }}>{item.action}</p>
-            </div>
-          ))}
-        </div>
-      </DashboardCard>
-
-      <DashboardCard>
         <SectionHeader title="Tech Stack" />
         <div className="dashboard-grid-2">
-          <div>
-            <p className="card-muted">Frontend</p>
-            <p>React + Vite + React Query + Leaflet</p>
-          </div>
-          <div>
-            <p className="card-muted">Backend</p>
-            <p>Node.js + Express + Mongoose</p>
-          </div>
-          <div>
-            <p className="card-muted">Database</p>
-            <p>MongoDB Atlas</p>
-          </div>
-          <div>
-            <p className="card-muted">Deployment</p>
-            <p>Docker + Nginx</p>
-          </div>
+          {techStack.map((item) => (
+            <div key={item.name}>
+              <p className="card-muted" style={{ marginBottom: 6 }}>
+                {item.name}
+              </p>
+              <p style={{ margin: 0 }}>{item.value}</p>
+            </div>
+          ))}
         </div>
+      </DashboardCard>
+
+      <DashboardCard>
+        <SectionHeader title="Developer" />
+        {developersQuery.isLoading ? (
+          <p className="card-muted">
+            Loading developer profiles from GitHub...
+          </p>
+        ) : developersQuery.error ? (
+          <p className="auth-error" style={{ margin: 0 }}>
+            {developersQuery.error.message}
+          </p>
+        ) : (
+          <div className="dashboard-grid-2">
+            {developers.map((developer) => (
+              <div
+                key={developer.login}
+                style={{
+                  border: "1px solid rgba(148,163,184,0.2)",
+                  borderRadius: 14,
+                  padding: 14,
+                  display: "grid",
+                  gridTemplateColumns: "72px 1fr",
+                  gap: 12,
+                }}
+              >
+                <img
+                  src={developer.avatarUrl}
+                  alt={`${developer.name} avatar`}
+                  width={72}
+                  height={72}
+                  style={{ borderRadius: "999px", objectFit: "cover" }}
+                />
+                <div>
+                  <a
+                    href={developer.profileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ fontWeight: 700 }}
+                  >
+                    {developer.name}
+                  </a>
+                  <p className="card-muted" style={{ margin: "4px 0 8px" }}>
+                    @{developer.login}
+                  </p>
+                  <p style={{ margin: 0 }}>{developer.bio}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </DashboardCard>
     </PageContainer>
   );
