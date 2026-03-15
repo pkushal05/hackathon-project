@@ -9,11 +9,13 @@ import {
   Package,
   TrendingUp,
   Info,
+  UserCheck,
   Menu,
   X,
+  LogOut,
 } from "lucide-react";
 
-const navItems = [
+const baseNavItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/fleet-map", label: "Fleet Map", icon: Map },
   { to: "/buses", label: "Buses", icon: Bus },
@@ -23,10 +25,17 @@ const navItems = [
   { to: "/about", label: "About", icon: Info },
 ];
 
-export default function Layout({ children }) {
+export default function Layout({ children, user, onLogout }) {
   const [open, setOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 980);
   const location = useLocation();
+  const navItems =
+    user?.role === "admin"
+      ? [
+          ...baseNavItems,
+          { to: "/admin/approvals", label: "Approvals", icon: UserCheck },
+        ]
+      : baseNavItems;
   const page =
     navItems.find((item) => item.to === location.pathname)?.label ||
     "Dashboard";
@@ -97,7 +106,21 @@ export default function Layout({ children }) {
               <div className="top-nav-meta">Agency Operations Dashboard</div>
             </div>
           </div>
-          <div className="top-nav-meta">System Status: Online</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div className="top-nav-meta">
+              {user?.name
+                ? `Signed in as ${user.name}`
+                : "System Status: Online"}
+            </div>
+            <button className="btn btn-secondary" onClick={onLogout}>
+              <span
+                style={{ display: "inline-flex", alignItems: "center", gap: 8 }}
+              >
+                <LogOut size={16} />
+                Logout
+              </span>
+            </button>
+          </div>
         </header>
 
         <main className="main-scroll">

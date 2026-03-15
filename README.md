@@ -6,16 +6,17 @@ A production-ready MERN stack web application for public transit maintenance dep
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
+| Layer    | Technology                                                     |
+| -------- | -------------------------------------------------------------- |
 | Frontend | React, Vite, TailwindCSS, React Query, React Leaflet, Recharts |
-| Backend | Node.js, Express, Mongoose |
-| Database | MongoDB Atlas |
-| DevOps | Docker, Nginx |
+| Backend  | Node.js, Express, Mongoose                                     |
+| Database | MongoDB Atlas                                                  |
+| DevOps   | Docker, Nginx                                                  |
 
 ## Quick Start
 
 ### Prerequisites
+
 - Node.js 18+
 - MongoDB Atlas cluster
 - npm
@@ -56,13 +57,16 @@ docker-compose up --build
 
 ## Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `MONGO_URI` | MongoDB Atlas connection string | — |
-| `PORT` | Server port | `5000` |
-| `CLIENT_URL` | Frontend URL for CORS | `http://localhost:5173` |
-| `GTFS_FEED_URL` | GTFS-Realtime vehicle positions feed | — |
-| `PLANNED_MONTHLY_DISTANCE` | Average monthly distance per bus (km) | `5000` |
+| Variable                   | Description                                                      | Default                          |
+| -------------------------- | ---------------------------------------------------------------- | -------------------------------- |
+| `MONGO_URI`                | MongoDB Atlas connection string                                  | —                                |
+| `PORT`                     | Server port                                                      | `5000`                           |
+| `CLIENT_URL`               | Frontend URL for CORS                                            | `http://localhost:5173`          |
+| `JWT_SECRET`               | Secret key used to sign/verify JWT tokens                        | Runtime-generated (dev fallback) |
+| `JWT_EXPIRES_IN`           | JWT expiration window                                            | `12h`                            |
+| `ADMIN_EMAILS`             | Comma-separated emails that can self-register as approved admins | —                                |
+| `GTFS_FEED_URL`            | GTFS-Realtime vehicle positions feed                             | —                                |
+| `PLANNED_MONTHLY_DISTANCE` | Average monthly distance per bus (km)                            | `5000`                           |
 
 ## Features
 
@@ -73,7 +77,8 @@ docker-compose up --build
 - **Parts Catalog** — Manage maintenance parts
 - **Service Types** — Define service levels (A/B/C/D hierarchy)
 - **Forecast Dashboard** — Predictive maintenance & parts demand (7/14/30-day windows)
-- **Settings** — Configure GTFS feed, forecast parameters
+- **Authentication** — JWT-based register/login and protected API access
+- **About** — Platform usage guide and operational notes
 
 ## Project Structure
 
@@ -103,6 +108,7 @@ See [docs/API.md](docs/API.md) for complete endpoint documentation.
 ## Urgency Scoring
 
 The system calculates urgency scores (0–100) based on:
+
 - Overdue kilometers (`unitsLateKm > 0` → +70)
 - Overdue distance (`min(unitsLateKm / 100, 20)`)
 - Days late (`min(daysLate * 1.2, 10)`)
