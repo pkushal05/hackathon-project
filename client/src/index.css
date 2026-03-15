@@ -662,7 +662,7 @@ a {
 
 .chatbot-panel {
   width: min(360px, calc(100vw - 32px));
-  height: min(460px, calc(100vh - 120px));
+  height: min(620px, calc(100vh - 96px));
   background: rgba(30, 41, 59, 0.98);
   border: 1px solid rgba(148, 163, 184, 0.24);
   border-radius: 14px;
@@ -687,6 +687,7 @@ a {
   gap: 10px;
   overflow-y: auto;
   flex: 1;
+  scroll-behavior: smooth;
 }
 
 .chatbot-bubble {

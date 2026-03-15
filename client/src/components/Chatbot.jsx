@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MessageCircle, Send, X } from "lucide-react";
 import api from "../api/client";
 
@@ -24,6 +24,15 @@ export default function Chatbot() {
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [messages, setMessages] = useState([starterMessage]);
+  const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+    });
+  }, [messages, isSending, open]);
 
   const handleSend = async () => {
     const text = input.trim();
@@ -53,7 +62,7 @@ export default function Chatbot() {
   };
 
   const onKeyDown = (event) => {
-    if (event.key === "Enter") {
+    if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       handleSend();
     }
@@ -84,6 +93,7 @@ export default function Chatbot() {
                 {msg.text}
               </div>
             ))}
+            <div ref={messagesEndRef} />
           </div>
 
           <div className="chatbot-input-row">
