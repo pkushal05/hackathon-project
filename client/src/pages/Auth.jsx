@@ -71,6 +71,7 @@ export default function AuthPage({ onAuthenticated }) {
         </div>
         <p className="auth-subtitle">
           Sign in to access fleet maintenance intelligence.
+          Demo ID: test1@gmail.com pass: test123
         </p>
 
         <div className="auth-tabs">
